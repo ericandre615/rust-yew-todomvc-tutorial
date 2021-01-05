@@ -6,8 +6,11 @@ use yew::prelude::{
     ShouldRender,
 };
 
+use crate::views::{Index};
+
 pub struct App {
     link: ComponentLink<Self>,
+    item_count: u32,
 }
 
 impl Component for App {
@@ -17,6 +20,7 @@ impl Component for App {
     fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             link,
+            item_count: 0,
         }
     }
 
@@ -25,7 +29,18 @@ impl Component for App {
 
     fn view(&self) -> Html {
         html! {
-            <h1>{ "Hello, Yew!" }</h1>
+            <div id="todo-app" class="todomvc-wrapper">
+                <section class="todoapp">
+                    <Index />
+                    <footer class="footer">
+                        <span class="todo-count">
+                            <strong>{ self.item_count }</strong>
+                            { " item(s) left" }
+                        </span>
+                    </footer>
+                </section>
+                <footer class="info" />
+            </div>
         }
     }
 }

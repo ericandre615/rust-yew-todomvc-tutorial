@@ -4,6 +4,8 @@ use wasm_bindgen::prelude::{wasm_bindgen, JsValue};
 use yew;
 
 mod app;
+mod views;
+mod components;
 
 #[wasm_bindgen(start)]
 pub fn run_app() -> Result<(), JsValue> {
