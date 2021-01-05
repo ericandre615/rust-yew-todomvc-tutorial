@@ -8,6 +8,8 @@ use yew::prelude::{
     Callback,
 };
 
+use crate::components::{Button, form::Checkbox};
+
 #[derive(Properties, Clone, PartialEq, Debug)]
 pub struct ListItemProps {
     #[prop_or(0)]
@@ -75,7 +77,17 @@ impl Component for ListItem {
 
         html! {
             <li class=format!("list-item {} {}", classes, completed)>
-                <label><span class="list-item">{ item }</span></label>
+                <div class="view" id=id>
+                    <Checkbox
+                        class="toggle"
+                        value=item.clone()
+                        checked=self.props.complete
+                        handle_change=self.link.callback(|_| ListItemMsg::ToggleComplete)
+                    />
+                    
+                    <label><span class="list-item">{ item }</span></label>
+                    <Button class="destroy" handle_click=self.link.callback(ListItemMsg::Clicked) />
+                </div>
             </li>
         }
     }
