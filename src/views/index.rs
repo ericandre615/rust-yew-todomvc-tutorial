@@ -28,6 +28,8 @@ pub struct Index {
 pub enum IndexMsg {
     InputChange(String),
     Keypress(u32),
+    ToggleComplete(u32),
+    RemoveItem(u32),
 }
 
 pub enum Keycode {
@@ -57,6 +59,16 @@ impl Component for Index {
             IndexMsg::InputChange(input) => {
                 self.current_todo = input;
 
+            },
+            IndexMsg::ToggleComplete(item_id) => {
+                for item in &mut self.items {
+                    if item.id == item_id {
+                        item.complete = !item.complete;
+                    }
+                }
+            },
+            IndexMsg::RemoveItem(item_id) => {
+                self.items.retain(|item| item.id != item_id);
             },
             IndexMsg::Keypress(keycode) => {
                 match keycode {
@@ -124,6 +136,8 @@ impl Index {
                         class="todo"
                         item=name
                         complete=complete
+                        handle_complete=self.link.callback(IndexMsg::ToggleComplete)
+                        handle_remove=self.link.callback(IndexMsg::RemoveItem)
                     />
                 }
             }).collect::<Vec<Html>>()
