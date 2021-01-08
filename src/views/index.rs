@@ -5,12 +5,14 @@ use yew::prelude::{
     html,
     ShouldRender,
     KeyboardEvent,
+    Properties,
 };
 
 use crate::components::{
     form::Input,
     todo::{List, ListItem},
 };
+use crate::app::AppFilter;
 
 struct ItemData {
     pub id: u32,
@@ -18,8 +20,14 @@ struct ItemData {
     pub complete: bool,
 }
 
+#[derive(Properties, Clone)]
+pub struct IndexProps {
+    pub filter: AppFilter,
+}
+
 pub struct Index {
     link: ComponentLink<Self>,
+    props: IndexProps,
     current_todo: String,
     items: Vec<ItemData>,
     internal_id: u32,
@@ -40,16 +48,14 @@ fn is_keycode(value: u32, code: Keycode) -> bool { value == code as u32 }
 
 impl Component for Index {
     type Message = IndexMsg;
-    type Properties = ();
+    type Properties = IndexProps;
 
-    fn create(_props: Self::Properties, link: ComponentLink<Self>) -> Self {
+    fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
         Self {
             link,
+            props,
             current_todo: String::new(),
-            items: vec![
-                ItemData { name: "Learn Rust".to_string(), id: 1, complete: false },
-                ItemData { name: "Learn Yew".to_string(), id: 2, complete: false },
-            ],
+            items: Vec::new(),
             internal_id: 0,
         }
     }
@@ -94,10 +100,17 @@ impl Component for Index {
         true
     }
 
-    fn change(&mut self, _props: Self::Properties) -> ShouldRender { false }
+    fn change(&mut self, props: Self::Properties) -> ShouldRender {
+        if self.props.filter != props.filter {
+            self.props.filter = props.filter;
+            true
+        } else {
+            false
+        }
+    }
 
     fn view(&self) -> Html {
-        let items = self.render_items();
+        let items = self.render_items(&self.props.filter);
 
         html! {
             <>
@@ -124,8 +137,15 @@ impl Component for Index {
 }
 
 impl Index {
-    fn render_items(&self) -> Vec<Html> {
+    fn render_items(&self, filter: &AppFilter) -> Vec<Html> {
         self.items.iter()
+            .filter(|item| {
+                match filter {
+                    AppFilter::Active => !item.complete,
+                    AppFilter::Complete => item.complete,
+                    AppFilter::All => true,
+                }
+            })
             .map(|litem| {
                 let ItemData { name, id, complete } = litem;
 
