@@ -7,13 +7,17 @@ use yew::prelude::{
     KeyboardEvent,
     Properties,
 };
+use serde::{Serialize, Deserialize};
+use serde_json::{Value};
 
 use crate::components::{
     form::Input,
     todo::{List, ListItem},
 };
 use crate::app::AppFilter;
+use crate::api::session;
 
+#[derive(Serialize, Deserialize, Ord, PartialOrd, Eq, PartialEq)]
 struct ItemData {
     pub id: u32,
     pub name: String,
@@ -51,15 +55,19 @@ impl Component for Index {
     type Properties = IndexProps;
 
     fn create(props: Self::Properties, link: ComponentLink<Self>) -> Self {
+        let storage = session::get_session(&"items").unwrap();
+        let items: Vec<ItemData> = serde_json::from_value(storage).unwrap_or(Vec::new());
+        let last_id = Index::get_last_id(&items);
+
         Self {
             link,
             props,
             current_todo: String::new(),
-            items: Vec::new(),
-            internal_id: 0,
+            items,
+            internal_id: last_id,
         }
     }
-
+    
     fn update(&mut self, msg: Self::Message) -> ShouldRender {
         match msg {
             IndexMsg::InputChange(input) => {
@@ -72,9 +80,12 @@ impl Component for Index {
                         item.complete = !item.complete;
                     }
                 }
+
+                self.store_items();
             },
             IndexMsg::RemoveItem(item_id) => {
                 self.items.retain(|item| item.id != item_id);
+                self.store_items();
             },
             IndexMsg::Keypress(keycode) => {
                 match keycode {
@@ -90,6 +101,7 @@ impl Component for Index {
                             });
 
                             self.internal_id += 1;
+                            self.store_items();
                         }
                     },
                     _ => {}
@@ -137,6 +149,26 @@ impl Component for Index {
 }
 
 impl Index {
+    fn store_items(&self) {
+        let json = serde_json::to_string(&self.items);
+
+        match json {
+            Ok(json_str) => {
+                session::set_session(&"items", &json_str);
+            },
+            Err(_) => {},
+        }
+    }
+
+    fn get_last_id(items: &Vec<ItemData>) -> u32 {
+        let max_item = items.iter().max();
+
+        match max_item {
+            Some(max) => { max.id + 1 },
+            None => 0,
+        }
+    }
+
     fn render_items(&self, filter: &AppFilter) -> Vec<Html> {
         self.items.iter()
             .filter(|item| {
